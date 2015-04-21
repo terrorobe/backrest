@@ -549,6 +549,7 @@ my %oOptionRule =
         &OPTION_RULE_SECTION => CONFIG_SECTION_ARCHIVE,
         &OPTION_RULE_OPERATION =>
         {
+            &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true
         }
     },
