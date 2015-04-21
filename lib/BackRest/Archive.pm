@@ -154,7 +154,7 @@ sub get
     }
 
     # Get the wal segment filename
-    my $strArchiveFile = $self->walFileName($oFile, $strSourceArchive);
+    my $strArchiveFile = $self->walFileName($oFile, PATH_BACKUP_ARCHIVE, $strSourceArchive);
 
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
@@ -416,7 +416,7 @@ sub pushCheck
         }
 
         # Check if the WAL segment already exists in the archive
-        if (defined($self->walFileName($oFile, $strWalSegment)))
+        if (defined($self->walFileName($oFile, PATH_BACKUP_ARCHIVE, $strWalSegment)))
         {
             confess &log(ERROR, "WAL segment ${strWalSegment} already exists in the archive", ERROR_ARCHIVE_DUPLICATE);
         }
@@ -555,6 +555,7 @@ sub walFileName
 {
     my $self = shift;
     my $oFile = shift;
+    my $strPathType = shift;
     my $strWalSegment = shift;
     my $iWaitSeconds = shift;
 
@@ -563,7 +564,7 @@ sub walFileName
     my $fSleep = .1;
 
     # Determine the path where the requested WAL segment is located
-    my $strArchivePath = dirname($oFile->path_get(PATH_BACKUP_ARCHIVE, $strWalSegment));
+    my $strArchivePath = dirname($oFile->path_get($strPathType, $strWalSegment));
 
     do
     {

@@ -53,11 +53,12 @@ use constant
     PATH_BACKUP_CLUSTER     => 'backup:cluster',
     PATH_BACKUP_TMP         => 'backup:tmp',
     PATH_BACKUP_ARCHIVE     => 'backup:archive',
+    PATH_BACKUP_ARCHIVE_IN  => 'backup:archive:in',
     PATH_BACKUP_ARCHIVE_OUT => 'backup:archive:out'
 };
 
 push @EXPORT, qw(PATH_ABSOLUTE PATH_DB PATH_DB_ABSOLUTE PATH_BACKUP PATH_BACKUP_ABSOLUTE PATH_BACKUP_CLUSTER PATH_BACKUP_TMP
-                 PATH_BACKUP_ARCHIVE PATH_BACKUP_ARCHIVE_OUT);
+                 PATH_BACKUP_ARCHIVE PATH_BACKUP_ARCHIVE_IN PATH_BACKUP_ARCHIVE_OUT);
 
 ####################################################################################################################################
 # STD Pipe Constants
@@ -288,7 +289,8 @@ sub path_get
     }
 
     # Get the backup archive path
-    if ($strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_ARCHIVE)
+    if ($strType eq PATH_BACKUP_ARCHIVE_OUT || $strType eq PATH_BACKUP_ARCHIVE_IN ||
+        $strType eq PATH_BACKUP_ARCHIVE)
     {
         my $strArchivePath = "$self->{strBackupPath}/archive/$self->{strStanza}";
 
@@ -309,9 +311,13 @@ sub path_get
             $strArchivePath = $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
                               (defined($strFile) ? '/' . $strFile : '');
         }
-        else
+        elsif ($strType eq $strType eq PATH_BACKUP_ARCHIVE_OUT)
         {
             $strArchivePath = "${strArchivePath}/out" . (defined($strFile) ? '/' . $strFile : '');
+        }
+        else
+        {
+            $strArchivePath = "${strArchivePath}/in" . (defined($strFile) ? '/' . $strFile : '');
         }
 
         if ($bTemp)

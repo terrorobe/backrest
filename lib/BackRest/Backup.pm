@@ -746,7 +746,7 @@ sub backup
 
         foreach my $strArchive (@stryArchive)
         {
-            my $strArchiveFile = $oArchive->walFileName($oFile, $strArchive, 600);
+            my $strArchiveFile = $oArchive->walFileName($oFile, PATH_BACKUP_ARCHIVE, $strArchive, 600);
 
             if (optionGet(OPTION_BACKUP_ARCHIVE_COPY))
             {
