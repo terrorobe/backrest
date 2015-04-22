@@ -15,6 +15,7 @@ use lib dirname($0);
 use BackRest::Utility;
 use BackRest::Exception;
 use BackRest::Config;
+use BackRest::Lock;
 use BackRest::File;
 use BackRest::Remote;
 
@@ -103,9 +104,11 @@ sub getProcess
     my $bArchiveAsync = optionGet(OPTION_ARCHIVE_ASYNC);
 
     # Get the WAL segment
-    $iResult = $self->get($ARGV[1], $ARGV[2], $bArchiveAsync);
+    my $iResult = $self->get($ARGV[1], $ARGV[2], $bArchiveAsync);
 
     # LAUNCH ASYNC
+
+    return $iResult;
 }
 
 ####################################################################################################################################
@@ -118,20 +121,17 @@ sub get
     my $strDestinationFile = shift;
     my $bArchiveAsync = shift;
 
-    # If async then see if the WAL segment is already local
-    if ($bArchiveAsync)
-    {
-        my $oFile = new BackRest::File
-        (
-            optionGet(OPTION_STANZA),
-            optionGet(OPTION_REPO_PATH),
-            NONE,
-            optionRemote(true)
-        );
-        
-        
-    }
-    
+    # # If async then see if the WAL segment is already local
+    # if ($bArchiveAsync)
+    # {
+    #     my $oFile = new BackRest::File
+    #     (
+    #         optionGet(OPTION_STANZA),
+    #         optionGet(OPTION_REPO_PATH),
+    #         NONE,
+    #         optionRemote(true)
+    #     );
+    # }
 
     # Create the file object
     my $oFile = new BackRest::File
@@ -252,13 +252,7 @@ sub pushProcess
     }
 
     # Create a lock file to make sure async archive-push does not run more than once
-    my $strLockPath = "${strArchivePath}/lock/" . optionGet(OPTION_STANZA) . "-archive.lock";
-
-    if (!lock_file_create($strLockPath))
-    {
-        &log(DEBUG, 'archive-push process is already running - exiting');
-        return 0;
-    }
+    lockAcquire(operationGet());
 
     # Open the log file
     log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');
@@ -283,7 +277,7 @@ sub pushProcess
         }
     }
 
-    lock_file_remove();
+    lockRelease();
     return 0;
 }
 

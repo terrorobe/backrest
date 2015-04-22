@@ -5,40 +5,27 @@ package BackRest::Lock;
 
 use strict;
 use warnings FATAL => qw(all);
-use Carp qw(confess longmess);
+use Carp qw(confess);
 
 use Fcntl qw(:DEFAULT :flock);
 use File::Basename qw(dirname);
-
-use lib dirname($0) . '/../lib';
-use BackRest::Config qw(optionGet OPTION_REPO_PATH OPTION_STANZA);
 use Exporter qw(import);
 
-our @EXPORT = qw(version_get
-                 data_hash_build trim common_prefix file_size_format execute
-                 log log_file_set log_level_set test_set test_get test_check
-                 lock_file_create lock_file_remove hsleep wait_remainder
-                 ini_save ini_load timestamp_string_get timestamp_file_string_get
-                 TRACE DEBUG ERROR ASSERT WARN INFO OFF true false
-                 TEST TEST_ENCLOSE TEST_MANIFEST_BUILD TEST_BACKUP_RESUME TEST_BACKUP_NORESUME FORMAT);
+use lib dirname($0) . '/../lib';
+use BackRest::Exception;
+use BackRest::Config;
+use BackRest::Utility;
 
 ####################################################################################################################################
-# Lock Types
+# Exported Functions
 ####################################################################################################################################
-use constant
-{
-    LOCK_TYPE_ARCHIVE   => 'archive',
-    LOCK_TYPE_BACKUP    => 'backup',
-    LOCK_TYPE_EXPIRE    => 'expire',
-    LOCK_TYPE_RESTORE   => 'backup'
-};
-
-our @EXPORT = qw(LOCK_TYPE_ARCHIVE LOCK_TYPE_BACKUP LOCK_TYPE_EXPIRE LOCK_TYPE_RESTORE);
+our @EXPORT = qw(lockAcquire lockRelease);
 
 ####################################################################################################################################
 # Global lock type and handle
 ####################################################################################################################################
 my $strCurrentLockType;
+my $strCurrentLockFile;
 my $hCurrentLockHandle;
 
 ####################################################################################################################################
@@ -64,15 +51,15 @@ sub lockFileName
     my $strStanza = shift;
     my $strRepoPath = shift;
 
-    return lockPathName($strRepoPath) . "/lock/${strStanza}-${strLockType}.lock";
+    return lockPathName($strRepoPath) . "/${strStanza}-${strLockType}.lock";
 }
 
 ####################################################################################################################################
-# lockCreate
+# lockAcquire
 #
-# Attempt to create the specified lock.  If the lock is taken by another process return false, else take the lock and return true.
+# Attempt to acquire the specified lock.  If the lock is taken by another process return false, else take the lock and return true.
 ####################################################################################################################################
-sub lockCreate
+sub lockAcquire
 {
     my $strLockType = shift;
 
@@ -82,11 +69,18 @@ sub lockCreate
         confess &lock(ASSERT, "${strCurrentLockType} lock is already held");
     }
 
-    # Attempt to open the lock file
-    $strLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA), optionGet(OPTION_REPO_PATH));
+    # Create the lock path if it does not exist
+    if (! -e lockPathName(optionGet(OPTION_REPO_PATH)))
+    {
+        mkdir lockPathName(optionGet(OPTION_REPO_PATH))
+            or confess(ERROR, 'unable to create lock path ' . lockPathName(optionGet(OPTION_REPO_PATH)), ERROR_PATH_CREATE);
+    }
 
-    sysopen($hCurrentLockFile, $strLockFile, O_WRONLY | O_CREAT)
-        or confess &log(ERROR, "unable to open lock file ${strLockFile}");
+    # Attempt to open the lock file
+    $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA), optionGet(OPTION_REPO_PATH));
+
+    sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT)
+        or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}");
 
     # Attempt to lock the lock file
     if (!flock($hCurrentLockHandle, LOCK_EX | LOCK_NB))
@@ -103,31 +97,31 @@ sub lockCreate
 }
 
 ####################################################################################################################################
-# lockRemove
+# lockRelease
 ####################################################################################################################################
-sub lockRemove
+sub lockRelease
 {
     my $strLockType = shift;
-    
+
     # Fail if there is no lock
     if (!defined($strCurrentLockType))
     {
         confess &log(ASSERT, 'no lock is currently held');
     }
 
-    # Fail if the lock being released is not the one held
-    if ($strLockType ne $strCurrentLockType)
-    {
-        confess &log(ASSERT, "cannot remove lock ${strLockType} since ${strCurrentLockType} is currently held");
-    }
-
-    # Close the file
-    close($hCurrentLockFile);
-    undef($strCurrentLockType);
-    undef($hCurrentLockFile);
+    # # Fail if the lock being released is not the one held
+    # if ($strLockType ne $strCurrentLockType)
+    # {
+    #     confess &log(ASSERT, "cannot remove lock ${strLockType} since ${strCurrentLockType} is currently held");
+    # }
 
     # Remove the file
-    unlink($strCurrentLockType);
+    unlink($strCurrentLockFile);
+    close($hCurrentLockHandle);
+
+    # Undef lock variables
+    undef($strCurrentLockType);
+    undef($hCurrentLockHandle);
 }
 
 1;

@@ -311,7 +311,7 @@ sub path_get
             $strArchivePath = $strArchivePath . (defined($strArchive) ? '/' . substr($strArchive, 0, 16) : '') .
                               (defined($strFile) ? '/' . $strFile : '');
         }
-        elsif ($strType eq $strType eq PATH_BACKUP_ARCHIVE_OUT)
+        elsif ($strType eq PATH_BACKUP_ARCHIVE_OUT)
         {
             $strArchivePath = "${strArchivePath}/out" . (defined($strFile) ? '/' . $strFile : '');
         }
