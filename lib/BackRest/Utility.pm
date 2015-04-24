@@ -642,4 +642,131 @@ sub ini_save
     close($hFile);
 }
 
+####################################################################################################################################
+####################################################################################################################################
+# Wait Functions
+####################################################################################################################################
+####################################################################################################################################
+push @EXPORT, qw(waitInit waitMore waitInterval);
+
+####################################################################################################################################
+# waitInit
+####################################################################################################################################
+sub waitInit
+{
+    my $iWaitSeconds = shift;
+    my $fSleep = shift;
+
+    # Declare oWait hash
+    my $oWait = {};
+
+    # If wait seconds is not defined or 0 then return undef
+    if (!defined($iWaitSeconds) || $iWaitSeconds == 0)
+    {
+        return undef;
+    }
+
+    # Wait seconds can be a minimum of .1
+    if ($iWaitSeconds < .1)
+    {
+        confess &log(ASSERT, 'iWaitSeconds cannot be < .1');
+    }
+
+    # If fSleep is not defined set it
+    if (!defined($fSleep))
+    {
+        if ($iWaitSeconds >= 1)
+        {
+            $$oWait{sleep} = .1;
+        }
+        else
+        {
+            $$oWait{sleep} = $iWaitSeconds / 10;
+        }
+    }
+    # Else make sure it's not greater than iWaitSeconds
+    else
+    {
+        # Make sure fsleep is less than iWaitSeconds
+        if ($fSleep >= $iWaitSeconds)
+        {
+            confess &log(ASSERT, 'fSleep > iWaitSeconds - this is useless');
+        }
+    }
+
+    # Set variables
+    $$oWait{wait_seconds} = $iWaitSeconds;
+    $$oWait{time_begin} = gettimeofday();
+    $$oWait{time_end} = $$oWait{time_begin};
+
+    return $oWait;
+}
+
+####################################################################################################################################
+# waitSleep
+####################################################################################################################################
+# sub waitSleep
+# {
+#     my $oWait = shift;
+#
+#     # Return if
+#     if (!defined($oWait))
+#     {
+#         return;
+#     }
+#
+#     hsleep($fSleep);
+#
+#     return $fSleep * 2 < $iWaitSeconds - (gettimeofday() - $lTime) ?
+#                $fSleep * 2 : ($iWaitSeconds - (gettimeofday() - $lTime)) + .01;
+# }
+
+####################################################################################################################################
+# waitMore
+####################################################################################################################################
+sub waitMore
+{
+    my $oWait = shift;
+
+    # Return if oWait is not defined
+    if (!defined($oWait))
+    {
+        return false;
+    }
+
+    # Sleep for fSleep time
+    hsleep($$oWait{sleep});
+
+    # Capture the end time
+    $$oWait{time_end} = gettimeofday();
+
+    # Calculate the new sleep time
+    $$oWait{sleep} = $$oWait{sleep} * 2 < $$oWait{wait_seconds} - ($$oWait{time_end} - $$oWait{time_begin}) ?
+                         $$oWait{sleep} * 2 : ($$oWait{wait_seconds} - ($$oWait{time_end} - $$oWait{time_begin})) + .001;
+
+    if ((gettimeofday() - $$oWait{time_begin}) < $$oWait{wait_seconds})
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+####################################################################################################################################
+# waitInterval
+####################################################################################################################################
+sub waitInterval
+{
+    my $oWait = shift;
+
+    # Error if oWait is not defined
+    if (!defined($oWait))
+    {
+        confess &log("iWaitSeconds was not defined in waitInit");
+    }
+
+    return int(($$oWait{time_end} - $$oWait{time_begin}) * 1000) / 1000;
+}
+
 1;

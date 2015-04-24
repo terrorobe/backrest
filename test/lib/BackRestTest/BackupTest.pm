@@ -1641,13 +1641,15 @@ sub BackRestTestBackup_Test
 
         for (my $bRemote = false; $bRemote <= true; $bRemote++)
         {
+            for (my $bAsync = false; $bAsync <= true; $bAsync++)
+            {
             for (my $bCompress = false; $bCompress <= true; $bCompress++)
             {
             for (my $bExists = false; $bExists <= true; $bExists++)
             {
                 # Increment the run, log, and decide whether this unit test should be run
                 if (!BackRestTestCommon_Run(++$iRun,
-                                            "rmt ${bRemote}, cmp ${bCompress}, exists ${bExists}")) {next}
+                                            "rmt ${bRemote}, async ${bAsync}, cmp ${bCompress}, exists ${bExists}")) {next}
 
                 # Create the test directory
                 if ($bCreate)
@@ -1675,7 +1677,7 @@ sub BackRestTestBackup_Test
                                                 undef,                          # checksum
                                                 undef,                          # hardlink
                                                 undef,                          # thread-max
-                                                undef,                          # archive-async
+                                                $bAsync,                        # archive-async
                                                 undef);                         # compress-async
 
                 my $strCommand = BackRestTestCommon_CommandMainGet() . ' --config=' . BackRestTestCommon_DbPathGet() .
@@ -1738,6 +1740,7 @@ sub BackRestTestBackup_Test
                 }
 
                 $bCreate = true;
+            }
             }
             }
         }

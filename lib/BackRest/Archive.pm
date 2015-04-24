@@ -78,9 +78,9 @@ sub process
     confess &log(ASSERT, "Archive->process() called with invalid operation: " . operationGet());
 }
 
-################################################################################################################################
+####################################################################################################################################
 # getProcess
-################################################################################################################################
+####################################################################################################################################
 sub getProcess
 {
     my $self = shift;
@@ -104,7 +104,10 @@ sub getProcess
     my $bArchiveAsync = optionGet(OPTION_ARCHIVE_ASYNC);
 
     # Get the WAL segment
-    my $iResult = $self->get($ARGV[1], $ARGV[2], $bArchiveAsync);
+    # do
+    # {
+        my $iResult = $self->get($ARGV[1], $ARGV[2], $bArchiveAsync);
+    # }
 
     # LAUNCH ASYNC
 
@@ -121,25 +124,13 @@ sub get
     my $strDestinationFile = shift;
     my $bArchiveAsync = shift;
 
-    # # If async then see if the WAL segment is already local
-    # if ($bArchiveAsync)
-    # {
-    #     my $oFile = new BackRest::File
-    #     (
-    #         optionGet(OPTION_STANZA),
-    #         optionGet(OPTION_REPO_PATH),
-    #         NONE,
-    #         optionRemote(true)
-    #     );
-    # }
-
     # Create the file object
     my $oFile = new BackRest::File
     (
         optionGet(OPTION_STANZA),
-        optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
-        optionRemoteType(),
-        optionRemote()
+        optionRemoteTypeTest(BACKUP) && !$bArchiveAsync ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
+        $bArchiveAsync ? NONE : optionRemoteType(),
+        optionRemote($bArchiveAsync)
     );
 
     # If the destination file path is not absolute then it is relative to the db data path
@@ -154,7 +145,8 @@ sub get
     }
 
     # Get the wal segment filename
-    my $strArchiveFile = $self->walFileName($oFile, PATH_BACKUP_ARCHIVE, $strSourceArchive);
+    my $strArchiveFile = $self->walFileName($oFile, $bArchiveAsync ? PATH_BACKUP_ARCHIVE_IN : PATH_BACKUP_ARCHIVE,
+                                            $strSourceArchive);
 
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
@@ -174,12 +166,21 @@ sub get
     my $bSourceCompressed = $strArchiveFile =~ "^.*\.$oFile->{strCompressExtension}\$" ? true : false;
 
     # Copy the archive file to the requested location
-    $oFile->copy(PATH_BACKUP_ARCHIVE, $strArchiveFile,     # Source file
+    $oFile->copy($bArchiveAsync ? PATH_BACKUP_ARCHIVE_IN : PATH_BACKUP_ARCHIVE, $strArchiveFile,    # Source file
                  PATH_DB_ABSOLUTE, $strDestinationFile,    # Destination file
                  $bSourceCompressed,                       # Source compression based on detection
                  false);                                   # Destination is not compressed
 
     return 0;
+}
+
+
+####################################################################################################################################
+# getAsync
+####################################################################################################################################
+sub getAsync
+{
+    my $self = shift;
 }
 
 ####################################################################################################################################
@@ -345,79 +346,6 @@ sub push
 }
 
 ####################################################################################################################################
-# pushCheck
-####################################################################################################################################
-sub pushCheck
-{
-    my $self = shift;
-    my $oFile = shift;
-    my $strWalSegment = shift;
-    my $strDbVersion = shift;
-    my $ullDbSysId = shift;
-
-    # Set operation and debug strings
-    my $strOperation = OP_ARCHIVE_PUSH_CHECK;
-    &log(DEBUG, "${strOperation}: " . PATH_BACKUP_ARCHIVE . ":${strWalSegment}");
-
-    if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
-    {
-        # Build param hash
-        my %oParamHash;
-
-        $oParamHash{'wal-segment'} = $strWalSegment;
-        $oParamHash{'db-version'} = $strDbVersion;
-        $oParamHash{'db-sys-id'} = $ullDbSysId;
-
-        # Output remote trace info
-        &log(TRACE, "${strOperation}: remote (" . $oFile->{oRemote}->command_param_string(\%oParamHash) . ')');
-
-        # Execute the command
-        $oFile->{oRemote}->command_execute($strOperation, \%oParamHash);
-    }
-    else
-    {
-        # Create the archive path if it does not exist
-        if (!$oFile->exists(PATH_BACKUP_ARCHIVE))
-        {
-            $oFile->path_create(PATH_BACKUP_ARCHIVE);
-        }
-
-        # If the info file exists check db version and system-id
-        my %oDbConfig;
-
-        if ($oFile->exists(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE))
-        {
-            ini_load($oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE), \%oDbConfig);
-
-            if ($oDbConfig{database}{'version'} ne $strDbVersion)
-            {
-                confess &log(ERROR, "WAL segment version ${strDbVersion} " .
-                             "does not match archive version $oDbConfig{database}{'version'}", ERROR_ARCHIVE_MISMATCH);
-            }
-
-            if ($oDbConfig{database}{'system-id'} ne $ullDbSysId)
-            {
-                confess &log(ERROR, "WAL segment system-id ${ullDbSysId} " .
-                             "does not match archive system-id $oDbConfig{database}{'system-id'}", ERROR_ARCHIVE_MISMATCH);
-            }
-        }
-        # Else create the info file from the current WAL segment
-        else
-        {
-            $oDbConfig{database}{'system-id'} = $ullDbSysId;
-            $oDbConfig{database}{'version'} = $strDbVersion;
-            ini_save($oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE), \%oDbConfig);
-        }
-
-        # Check if the WAL segment already exists in the archive
-        if (defined($self->walFileName($oFile, PATH_BACKUP_ARCHIVE, $strWalSegment)))
-        {
-            confess &log(ERROR, "WAL segment ${strWalSegment} already exists in the archive", ERROR_ARCHIVE_DUPLICATE);
-        }
-    }
-}
-
-####################################################################################################################################
 # pushAsync
 ####################################################################################################################################
 sub pushAsync
@@ -540,6 +468,79 @@ sub pushAsync
 }
 
 ####################################################################################################################################
+# pushCheck
+####################################################################################################################################
+sub pushCheck
+{
+    my $self = shift;
+    my $oFile = shift;
+    my $strWalSegment = shift;
+    my $strDbVersion = shift;
+    my $ullDbSysId = shift;
+
+    # Set operation and debug strings
+    my $strOperation = OP_ARCHIVE_PUSH_CHECK;
+    &log(DEBUG, "${strOperation}: " . PATH_BACKUP_ARCHIVE . ":${strWalSegment}");
+
+    if ($oFile->is_remote(PATH_BACKUP_ARCHIVE))
+    {
+        # Build param hash
+        my %oParamHash;
+
+        $oParamHash{'wal-segment'} = $strWalSegment;
+        $oParamHash{'db-version'} = $strDbVersion;
+        $oParamHash{'db-sys-id'} = $ullDbSysId;
+
+        # Output remote trace info
+        &log(TRACE, "${strOperation}: remote (" . $oFile->{oRemote}->command_param_string(\%oParamHash) . ')');
+
+        # Execute the command
+        $oFile->{oRemote}->command_execute($strOperation, \%oParamHash);
+    }
+    else
+    {
+        # Create the archive path if it does not exist
+        if (!$oFile->exists(PATH_BACKUP_ARCHIVE))
+        {
+            $oFile->path_create(PATH_BACKUP_ARCHIVE);
+        }
+
+        # If the info file exists check db version and system-id
+        my %oDbConfig;
+
+        if ($oFile->exists(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE))
+        {
+            ini_load($oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE), \%oDbConfig);
+
+            if ($oDbConfig{database}{'version'} ne $strDbVersion)
+            {
+                confess &log(ERROR, "WAL segment version ${strDbVersion} " .
+                             "does not match archive version $oDbConfig{database}{'version'}", ERROR_ARCHIVE_MISMATCH);
+            }
+
+            if ($oDbConfig{database}{'system-id'} ne $ullDbSysId)
+            {
+                confess &log(ERROR, "WAL segment system-id ${ullDbSysId} " .
+                             "does not match archive system-id $oDbConfig{database}{'system-id'}", ERROR_ARCHIVE_MISMATCH);
+            }
+        }
+        # Else create the info file from the current WAL segment
+        else
+        {
+            $oDbConfig{database}{'system-id'} = $ullDbSysId;
+            $oDbConfig{database}{'version'} = $strDbVersion;
+            ini_save($oFile->path_get(PATH_BACKUP_ARCHIVE, ARCHIVE_INFO_FILE), \%oDbConfig);
+        }
+
+        # Check if the WAL segment already exists in the archive
+        if (defined($self->walFileName($oFile, PATH_BACKUP_ARCHIVE, $strWalSegment)))
+        {
+            confess &log(ERROR, "WAL segment ${strWalSegment} already exists in the archive", ERROR_ARCHIVE_DUPLICATE);
+        }
+    }
+}
+
+####################################################################################################################################
 # walFileName
 #
 # Returns the filename in the archive of a WAL segment.  Optionally, a wait time can be specified.  In this case an error will be
@@ -554,8 +555,7 @@ sub walFileName
     my $iWaitSeconds = shift;
 
     # Record the start time
-    my $lTime = time();
-    my $fSleep = .1;
+    my $oWait = waitInit($iWaitSeconds);
 
     # Determine the path where the requested WAL segment is located
     my $strArchivePath = dirname($oFile->path_get($strPathType, $strWalSegment));
@@ -577,20 +577,13 @@ sub walFileName
         {
             confess &log(ASSERT, @stryWalFileName . " duplicate files found for ${strWalSegment}", ERROR_ARCHIVE_DUPLICATE);
         }
-
-        # If waiting then sleep before trying again
-        if (defined($iWaitSeconds))
-        {
-            hsleep($fSleep);
-            $fSleep = $fSleep * 2 < $iWaitSeconds - (time() - $lTime) ? $fSleep * 2 : ($iWaitSeconds - (time() - $lTime)) + .1;
-        }
     }
-    while (defined($iWaitSeconds) && (time() - $lTime) < $iWaitSeconds);
+    while (waitMore($oWait));
 
     # If waiting and no WAL segment was found then throw an error
     if (defined($iWaitSeconds))
     {
-        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after " . (time() - $lTime)  . ' second(s)');
+        confess &log(ERROR, "could not find WAL segment ${strWalSegment} after " . waitInterval($oWait)  . ' second(s)');
     }
 
     return undef;
