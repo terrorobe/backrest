@@ -742,7 +742,7 @@ sub backup
         # After the backup has been stopped, need to make a copy of the archive logs need to make the db consistent
         &log(DEBUG, "retrieving archive logs ${strArchiveStart}:${strArchiveStop}");
         my $oArchive = new BackRest::Archive();
-        my @stryArchive = $oArchive->range($strArchiveStart, $strArchiveStop, $oDb->db_version_get() < 9.3);
+        my @stryArchive = $oArchive->walRange($strArchiveStart, $strArchiveStop, $oDb->db_version_get() < 9.3);
 
         foreach my $strArchive (@stryArchive)
         {

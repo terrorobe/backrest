@@ -66,7 +66,7 @@ sub lockAcquire
     # Cannot proceed if a lock is currently held
     if (defined($strCurrentLockType))
     {
-        confess &lock(ASSERT, "${strCurrentLockType} lock is already held");
+        confess &log(ASSERT, "${strCurrentLockType} lock is already held");
     }
 
     # Create the lock path if it does not exist

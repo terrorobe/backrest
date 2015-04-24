@@ -10,6 +10,7 @@ use Carp qw(confess);
 use File::Basename qw(dirname basename);
 use Fcntl qw(SEEK_CUR O_RDONLY O_WRONLY O_CREAT O_EXCL);
 use Exporter qw(import);
+use POSIX qw(setsid);
 
 use lib dirname($0);
 use BackRest::Utility;
@@ -86,13 +87,17 @@ sub getProcess
     my $self = shift;
 
     # Make sure the archive file is defined
+    my $strSourceArchive = $ARGV[1];
+
     if (!defined($ARGV[1]))
     {
         confess &log(ERROR, 'WAL segment not provided', ERROR_PARAM_REQUIRED);
     }
 
     # Make sure the destination file is defined
-    if (!defined($ARGV[2]))
+    my $strDestinationFile = $ARGV[2];
+
+    if (!defined($strDestinationFile))
     {
         confess &log(ERROR, 'WAL segment destination not provided', ERROR_PARAM_REQUIRED);
     }
@@ -100,14 +105,66 @@ sub getProcess
     # Info for the Postgres log
     &log(INFO, 'getting WAL segment ' . $ARGV[1]);
 
-    # Get the async flag
-    my $bArchiveAsync = optionGet(OPTION_ARCHIVE_ASYNC);
+    # Get the async flag and start the timer
+    my $bArchiveAsync = optionGet(OPTION_ARCHIVE_ASYNC) && $strSourceArchive =~ /^[0-F]{24}$/;
+    my $oWaitGet = waitInit($bArchiveAsync ? 1 : undef);
+    my $iResult = 1;
+    my $bArchiveAsyncRunning = false;
 
     # Get the WAL segment
-    # do
-    # {
-        my $iResult = $self->get($ARGV[1], $ARGV[2], $bArchiveAsync);
-    # }
+    do
+    {
+        # If async then fork the async process
+        if ($bArchiveAsync && !$bArchiveAsyncRunning && lockAcquire(OP_ARCHIVE_GET))
+        {
+            my $pId;
+
+            if ($pId = fork())
+            {
+                $bArchiveAsyncRunning = true;
+            }
+            elsif (defined($pId))
+            {
+                # Close file handles and reopen to /dev/null
+                close STDIN;
+                close STDOUT;
+                close STDERR;
+
+                open STDIN,  '<', '/dev/null' or die $!;
+                open STDOUT, '>', '/dev/null' or die $!;
+                open STDERR, '>', '/dev/null' or die $!;
+
+                # Create a new session for this process
+                setsid()
+                    or confess &log(ERROR, "async process cannot start new session: $!");
+
+                log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive');
+
+                my $oWaitAsync = waitInit(30);
+
+                do
+                {
+                    if (getAsync($strSourceArchive) > 0)
+                    {
+                        # waitAdd();
+                    }
+
+                    &log(DEBUG, 'async waiting');
+                }
+                while (waitMore($oWaitAsync));
+
+                return 0;
+            }
+            else
+            {
+                &log(ERROR, 'unable to fork async process - switching async mode off');
+                $bArchiveAsync = false;
+            }
+        }
+
+        $iResult = $self->get($ARGV[1], $ARGV[2], $bArchiveAsync);
+    }
+    while (waitMore($oWaitGet));
 
     # LAUNCH ASYNC
 
@@ -174,13 +231,52 @@ sub get
     return 0;
 }
 
-
 ####################################################################################################################################
 # getAsync
 ####################################################################################################################################
 sub getAsync
 {
     my $self = shift;
+    my $strLastArchive = shift;
+
+    # Create the file object
+    my $oFile = new BackRest::File
+    (
+        optionGet(OPTION_STANZA),
+        optionGet(OPTION_REPO_PATH),
+        NONE,
+        optionRemote(true)
+    );
+
+    # Get all files already in the in path
+    my @stryWalFileName = $oFile->list(PATH_BACKUP_ARCHIVE_IN, undef, undef, undef, true);
+    my $iFileExists = 0;
+
+    foreach my $strFile (@stryWalFileName)
+    {
+        if ($strFile =~ "^[0-F]{24}-[0-f]{40}\$")
+        {
+            if ($strFile lt $strLastArchive)
+            {
+                &log(INFO, "removed old archive '${strFile}'");
+                continue;
+            }
+
+            $iFileExists++;
+        }
+        else
+        {
+            &log(WARN, "invalid file '${strFile}' found in archive in path");
+        }
+    }
+
+    # If the number of existing files is lower than the threshold then fetch more
+    if ($iFileExists <= 32)
+    {
+
+    }
+
+    return 0;
 }
 
 ####################################################################################################################################
@@ -226,7 +322,7 @@ sub pushProcess
 
         &log(INFO, 'pushing WAL segment ' . $ARGV[1] . ($bArchiveAsync ? ' asynchronously' : ''));
 
-        $self->push($ARGV[1], $bArchiveAsync);
+        $self->pushOne($ARGV[1], $bArchiveAsync);
 
         # Exit if we are not archiving async
         if (!$bArchiveAsync)
@@ -283,9 +379,9 @@ sub pushProcess
 }
 
 ####################################################################################################################################
-# push
+# pushOne
 ####################################################################################################################################
-sub push
+sub pushOne
 {
     my $self = shift;
     my $strSourceFile = shift;
@@ -377,7 +473,7 @@ sub pushAsync
         if ($strFile =~ "^[0-F]{24}(-[0-f]{40})(\\.$oFile->{strCompressExtension}){0,1}\$" ||
             $strFile =~ /^[0-F]{8}\.history$/ || $strFile =~ /^[0-F]{24}\.[0-F]{8}\.backup$/)
         {
-            CORE::push(@stryFile, $strFile);
+            push(@stryFile, $strFile);
 
             $lFileSize += $oManifestHash{name}{"${strFile}"}{size};
             $lFileTotal++;
@@ -700,12 +796,12 @@ sub walInfo
 }
 
 ####################################################################################################################################
-# range
+# walRange
 #
 # Generates a range of archive log file names given the start and end log file name.  For pre-9.3 databases, use bSkipFF to exclude
 # the FF that prior versions did not generate.
 ####################################################################################################################################
-sub range
+sub walRange
 {
     my $self = shift;
     my $strArchiveStart = shift;
@@ -729,38 +825,57 @@ sub range
     my @stryArchive;
     my $iArchiveIdx = 0;
 
-    if ($strTimeline ne substr($strArchiveStop, 0, 8))
+    if (substr($strArchiveStart, 0, 8) ne substr($strArchiveStop, 0, 8))
     {
         confess &log(ERROR, "Timelines between ${strArchiveStart} and ${strArchiveStop} differ");
     }
 
     # Iterate through all archive logs between start and stop
-    my $iStartMajor = hex substr($strArchiveStart, 8, 8);
-    my $iStartMinor = hex substr($strArchiveStart, 16, 8);
+    push @stryArchive, $strArchiveStart;
 
-    my $iStopMajor = hex substr($strArchiveStop, 8, 8);
-    my $iStopMinor = hex substr($strArchiveStop, 16, 8);
-
-    $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
-    $iArchiveIdx += 1;
-
-    while (!($iStartMajor == $iStopMajor && $iStartMinor == $iStopMinor))
+    while ($stryArchive[@stryArchive - 1] ne $strArchiveStop)
     {
-        $iStartMinor += 1;
-
-        if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor == 256)
-        {
-            $iStartMajor += 1;
-            $iStartMinor = 0;
-        }
-
-        $stryArchive[$iArchiveIdx] = uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
-        $iArchiveIdx += 1;
+        push @stryArchive, $self->walNext($stryArchive[@stryArchive - 1], $bSkipFF);
     }
 
     &log(TRACE, "    archive_list_get: $strArchiveStart:$strArchiveStop (@stryArchive)");
 
     return @stryArchive;
+}
+
+####################################################################################################################################
+# walNext
+#
+# Determines the next archive log in the sequence.
+####################################################################################################################################
+sub walNext
+{
+    my $self = shift;
+    my $strArchivePrior = shift;
+    my $bSkipFF = shift;
+
+    # strSkipFF default to false
+    $bSkipFF = defined($bSkipFF) ? $bSkipFF : false;
+
+    # Get the timelines and make sure they match
+    my $strTimeline = substr($strArchivePrior, 0, 8);
+
+    # Iterate through all archive logs between start and stop
+    my $iStartMajor = hex substr($strArchivePrior, 8, 8);
+    my $iStartMinor = hex substr($strArchivePrior, 16, 8);
+
+    # Increment minor
+    $iStartMinor += 1;
+
+    # If the minor is maxed out then increment major and reset the minor
+    if ($bSkipFF && $iStartMinor == 255 || !$bSkipFF && $iStartMinor == 256)
+    {
+        $iStartMajor += 1;
+        $iStartMinor = 0;
+    }
+
+    # Return the next archive name
+    return uc(sprintf("${strTimeline}%08x%08x", $iStartMajor, $iStartMinor));
 }
 
 1;
