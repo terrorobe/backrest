@@ -1428,7 +1428,7 @@ sub BackRestTestBackup_Test
     my $strStanza = BackRestTestCommon_StanzaGet();
 
     my $strArchiveChecksum = '1c7e00fd09b9dd11fc2966590b3e3274645dd031';
-    my $iArchiveMax = 3;
+    my $iArchiveMax = 9;
     my $strXlogPath = BackRestTestCommon_DbCommonPathGet() . '/pg_xlog';
     my $strArchiveTestFile = BackRestTestCommon_DataPathGet() . '/test.archive2.bin';
 
@@ -1698,9 +1698,6 @@ sub BackRestTestBackup_Test
 
                         $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo));
 
-                        &log(INFO, '    archive ' .sprintf('%02x', $iArchiveNo) .
-                                   " - ${strArchiveFile}");
-
                         my $strSourceFile = "${strArchiveFile}-${strArchiveChecksum}";
 
                         if ($bCompress)
@@ -1715,8 +1712,15 @@ sub BackRestTestBackup_Test
                                      undef, undef, undef,                    # Unused params
                                      true);                                  # Create path if it does not exist
 
+                    }
+
+                    for (my $iArchiveNo = 1; $iArchiveNo <= $iArchiveMax; $iArchiveNo++)
+                    {
+                        $strArchiveFile = uc(sprintf('0000000100000001%08x', $iArchiveNo));
                         my $strDestinationFile = "${strXlogPath}/${strArchiveFile}";
 
+                        &log(INFO, '    archive ' .sprintf('%02x', $iArchiveNo) .
+                                   " - ${strArchiveFile}");
                         BackRestTestCommon_Execute($strCommand . " ${strArchiveFile} ${strDestinationFile}");
 
                         # Check that the destination file exists

@@ -107,7 +107,7 @@ sub getProcess
 
     # Get the async flag and start the timer
     my $bArchiveAsync = optionGet(OPTION_ARCHIVE_ASYNC) && $strSourceArchive =~ /^[0-F]{24}$/;
-    my $oWaitGet = waitInit($bArchiveAsync ? 1 : undef);
+    my $oWaitGet = waitInit($bArchiveAsync ? 5 : undef);
     my $iResult = 1;
     my $bArchiveAsyncRunning = false;
 
@@ -122,6 +122,7 @@ sub getProcess
             if ($pId = fork())
             {
                 $bArchiveAsyncRunning = true;
+                log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive');
             }
             elsif (defined($pId))
             {
@@ -138,15 +139,20 @@ sub getProcess
                 setsid()
                     or confess &log(ERROR, "async process cannot start new session: $!");
 
-                log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive');
+                log_file_set(optionGet(OPTION_REPO_PATH) . '/log/' . optionGet(OPTION_STANZA) . '-archive-async');
 
                 my $oWaitAsync = waitInit(30);
+                my $iFileFetched;
+                my $strLastFetchedArchive;
 
                 do
                 {
-                    if (getAsync($strSourceArchive) > 0)
+                    ($iFileFetched, $strLastFetchedArchive) = $self->getAsync($strSourceArchive, $strLastFetchedArchive);
+
+                    if ($iFileFetched > 0)
                     {
-                        # waitAdd();
+                        &log(DEBUG, "WAIT RESET");
+                        waitReset();
                     }
 
                     &log(DEBUG, 'async waiting');
@@ -162,11 +168,10 @@ sub getProcess
             }
         }
 
-        $iResult = $self->getOne($ARGV[1], $ARGV[2], $bArchiveAsync);
+        &log(DEBUG, "fetching $ARGV[1]");
+        $iResult = $self->getOne($ARGV[1], $ARGV[2], $bArchiveAsync, false);
     }
-    while (waitMore($oWaitGet));
-
-    # LAUNCH ASYNC
+    while ($iResult != 0 && waitMore($oWaitGet));
 
     return $iResult;
 }
@@ -180,6 +185,7 @@ sub getOne
     my $strSourceArchive = shift;
     my $strDestinationFile = shift;
     my $bArchiveAsync = shift;
+    my $bDestinationPathCreate = shift;
 
     # Create the file object
     my $oFile = new BackRest::File
@@ -189,6 +195,11 @@ sub getOne
         $bArchiveAsync ? NONE : optionRemoteType(),
         optionRemote($bArchiveAsync)
     );
+
+    # Switch to a remote file object if needed
+    if (optionRemoteTest())
+    {
+    }
 
     # If the destination file path is not absolute then it is relative to the db data path
     if (index($strDestinationFile, '/',) != 0)
@@ -224,9 +235,17 @@ sub getOne
 
     # Copy the archive file to the requested location
     $oFile->copy($bArchiveAsync ? PATH_BACKUP_ARCHIVE_IN : PATH_BACKUP_ARCHIVE, $strArchiveFile,    # Source file
-                 PATH_DB_ABSOLUTE, $strDestinationFile,    # Destination file
-                 $bSourceCompressed,                       # Source compression based on detection
-                 false);                                   # Destination is not compressed
+                 PATH_DB_ABSOLUTE, $strDestinationFile,     # Destination file
+                 $bSourceCompressed,                        # Source compression based on detection
+                 false,                                     # Destination is not compressed
+                 undef, undef, undef,
+                 $bDestinationPathCreate);                  # Create destination path
+
+    # If async then remove the copied file
+    if ($bArchiveAsync)
+    {
+        $oFile->remove(PATH_BACKUP_ARCHIVE_IN, $strArchiveFile);
+    }
 
     return 0;
 }
@@ -237,9 +256,13 @@ sub getOne
 sub getAsync
 {
     my $self = shift;
-    my $strLastArchive = shift;
+    my $strRequestedArchive = shift;
+    my $strLastFetchedArchive = shift;
 
-    # Create the file object
+    &log(DEBUG, "Archive->asyncGet: last requested = ${strRequestedArchive}, " .
+                "last fetched = " . (defined($strLastFetchedArchive) ? $strLastFetchedArchive : 'none'));
+
+    # Create the file object to get the local archive path
     my $oFile = new BackRest::File
     (
         optionGet(OPTION_STANZA),
@@ -248,21 +271,44 @@ sub getAsync
         optionRemote(true)
     );
 
+    my $strArchivePath = $oFile->path_get(PATH_BACKUP_ARCHIVE_IN);
+
+    # Create the file object used to retrieve
+    if (optionRemoteTest())
+    {
+        $oFile = new BackRest::File
+        (
+            optionGet(OPTION_STANZA),
+            optionGet(OPTION_REPO_REMOTE_PATH),
+            optionRemoteType(),
+            optionRemote()
+        );
+    }
+
     # Get all files already in the in path
     my @stryWalFileName = $oFile->list(PATH_BACKUP_ARCHIVE_IN, undef, undef, undef, true);
     my $iFileExists = 0;
+    my $strLastArchive;
+
+    &log(DEBUG, "GOT HERE " . @stryWalFileName);
 
     foreach my $strFile (@stryWalFileName)
     {
         if ($strFile =~ "^[0-F]{24}-[0-f]{40}\$")
         {
-            if ($strFile lt $strLastArchive)
+            if ($strFile lt $strRequestedArchive)
             {
                 &log(INFO, "removed old archive '${strFile}'");
-                continue;
             }
+            else
+            {
+                if (!defined($strLastFetchedArchive) || $strLastFetchedArchive lt $strFile)
+                {
+                    $strLastFetchedArchive = substr($strFile, 0, 24);
+                }
 
-            $iFileExists++;
+                $iFileExists++;
+            }
         }
         else
         {
@@ -270,13 +316,30 @@ sub getAsync
         }
     }
 
+#    &log(DEBUG, "Archive->asyncGet: " . ($iFileExists > 0 ? "last found locally ${strLastArchive}" : "none found locally"));
+
     # If the number of existing files is lower than the threshold then fetch more
+    my $iFileMore = 0;
+    my $strNextArchive = defined($strLastFetchedArchive) ? $self->walNext($strLastFetchedArchive) : $strRequestedArchive;
+
     if ($iFileExists <= 32)
     {
+        my $strNextArchiveFile = $self->walFind($oFile, PATH_BACKUP_ARCHIVE, $strNextArchive);
 
+        while ($iFileExists < 3 && defined($strNextArchiveFile) &&
+               $self->getOne($strNextArchive, "${strArchivePath}/$strNextArchiveFile", false, true) == 0)
+        {
+            $iFileMore++;
+            $iFileExists++;
+            $strLastFetchedArchive = $strNextArchive;
+            $strNextArchive = $self->walNext($strNextArchive);
+            $strNextArchiveFile = $self->walFind($oFile, PATH_BACKUP_ARCHIVE, $strNextArchive);
+        }
     }
 
-    return 0;
+    &log(DEBUG, "Archive->asyncGet: " . ($iFileMore > 0 ? "stopped at ${strLastFetchedArchive}" : "nothing fetched"));
+
+    return $iFileMore, $strLastFetchedArchive;
 }
 
 ####################################################################################################################################
