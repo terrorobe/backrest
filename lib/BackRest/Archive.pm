@@ -162,7 +162,7 @@ sub getProcess
             }
         }
 
-        $iResult = $self->get($ARGV[1], $ARGV[2], $bArchiveAsync);
+        $iResult = $self->getOne($ARGV[1], $ARGV[2], $bArchiveAsync);
     }
     while (waitMore($oWaitGet));
 
@@ -172,9 +172,9 @@ sub getProcess
 }
 
 ####################################################################################################################################
-# get
+# getOne
 ####################################################################################################################################
-sub get
+sub getOne
 {
     my $self = shift;
     my $strSourceArchive = shift;
@@ -202,8 +202,8 @@ sub get
     }
 
     # Get the wal segment filename
-    my $strArchiveFile = $self->walFileName($oFile, $bArchiveAsync ? PATH_BACKUP_ARCHIVE_IN : PATH_BACKUP_ARCHIVE,
-                                            $strSourceArchive);
+    my $strArchiveFile = $self->walFind($oFile, $bArchiveAsync ? PATH_BACKUP_ARCHIVE_IN : PATH_BACKUP_ARCHIVE,
+                                        $strSourceArchive);
 
     # If there are no matching archive files then there are two possibilities:
     # 1) The end of the archive stream has been reached, this is normal and a 1 will be returned
@@ -629,7 +629,7 @@ sub pushCheck
         }
 
         # Check if the WAL segment already exists in the archive
-        if (defined($self->walFileName($oFile, PATH_BACKUP_ARCHIVE, $strWalSegment)))
+        if (defined($self->walFind($oFile, PATH_BACKUP_ARCHIVE, $strWalSegment)))
         {
             confess &log(ERROR, "WAL segment ${strWalSegment} already exists in the archive", ERROR_ARCHIVE_DUPLICATE);
         }
@@ -637,12 +637,12 @@ sub pushCheck
 }
 
 ####################################################################################################################################
-# walFileName
+# walFind
 #
 # Returns the filename in the archive of a WAL segment.  Optionally, a wait time can be specified.  In this case an error will be
 # thrown when the WAL segment is not found.
 ####################################################################################################################################
-sub walFileName
+sub walFind
 {
     my $self = shift;
     my $oFile = shift;
@@ -861,8 +861,8 @@ sub walNext
     my $strTimeline = substr($strArchivePrior, 0, 8);
 
     # Iterate through all archive logs between start and stop
-    my $iStartMajor = hex substr($strArchivePrior, 8, 8);
-    my $iStartMinor = hex substr($strArchivePrior, 16, 8);
+    my $iStartMajor = hex(substr($strArchivePrior, 8, 8));
+    my $iStartMinor = hex(substr($strArchivePrior, 16, 8));
 
     # Increment minor
     $iStartMinor += 1;
