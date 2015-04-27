@@ -142,6 +142,10 @@ use constant
     # ARCHIVE Section
     OPTION_ARCHIVE_MAX_MB           => 'archive-max-mb',
     OPTION_ARCHIVE_ASYNC            => 'archive-async',
+    OPTION_ARCHIVE_ASYNC_MIN        => 'archive-async-min',
+    OPTION_ARCHIVE_ASYNC_MAX        => 'archive-async-max',
+    OPTION_ARCHIVE_ASYNC_TIMEOUT    => 'archive-async-timeout',
+    OPTION_ARCHIVE_ASYNC_WAIT       => 'archive-async-wait',
 
     # BACKUP Section
     OPTION_BACKUP_ARCHIVE_CHECK     => 'archive-check',

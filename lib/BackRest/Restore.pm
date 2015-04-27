@@ -12,10 +12,12 @@ use Carp qw(confess);
 
 use File::Basename qw(dirname);
 use File::stat qw(lstat);
+use File::Path qw(remove_tree);
 
 use lib dirname($0);
 use BackRest::Exception;
 use BackRest::Utility;
+use BackRest::Lock;
 use BackRest::ThreadGroup;
 use BackRest::RestoreFile;
 use BackRest::Config;
@@ -551,6 +553,24 @@ sub restore
     if ($self->{oFile}->exists(PATH_DB_ABSOLUTE, $self->{strDbClusterPath} . '/' . FILE_POSTMASTER_PID))
     {
         confess &log(ERROR, 'unable to restore while Postgres is running', ERROR_POSTMASTER_RUNNING);
+    }
+
+    # Lock the archive-get process to be sure it is not running
+    lockAcquire(OP_ARCHIVE_GET, 900);
+
+    my $oFile = new BackRest::File
+    (
+        optionGet(OPTION_STANZA),
+        optionGet(OPTION_REPO_PATH),
+        NONE,
+        optionRemote(true)
+    );
+
+    # Remove any old archive logs
+    if (-e $oFile->path_get(PATH_BACKUP_ARCHIVE_IN))
+    {
+        remove_tree($oFile->path_get(PATH_BACKUP_ARCHIVE_IN));
+            or confess &log(ERROR, "unable to remove " . $oFile->path_get(PATH_BACKUP_ARCHIVE_IN));
     }
 
     # Log the backup set to restore

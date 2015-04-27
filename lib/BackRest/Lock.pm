@@ -24,9 +24,7 @@ our @EXPORT = qw(lockAcquire lockRelease);
 ####################################################################################################################################
 # Global lock type and handle
 ####################################################################################################################################
-my $strCurrentLockType;
-my $strCurrentLockFile;
-my $hCurrentLockHandle;
+my @oyLock;
 
 ####################################################################################################################################
 # lockPathName
@@ -62,12 +60,18 @@ sub lockFileName
 sub lockAcquire
 {
     my $strLockType = shift;
+    my $fTimeWait = shift;
 
     # Cannot proceed if a lock is currently held
-    if (defined($strCurrentLockType))
+    if (@oyLock &&
+        !($strLockType eq OP_ARCHIVE_GET && ${$oyLock[@oyLock - 1]}{type} eq OP_RESTORE))
     {
-        confess &log(ASSERT, "${strCurrentLockType} lock is already held");
+        confess &log(ASSERT, "cannot lock ${strLockType} when " . ${$oyLock[@oyLock - 1]}{type} . ' is already held');
     }
+
+    # Create lock
+    my $oLock = {};
+    $$oLock{type} = $strLockType;
 
     # Create the lock path if it does not exist
     if (! -e lockPathName(optionGet(OPTION_REPO_PATH)))
@@ -77,20 +81,20 @@ sub lockAcquire
     }
 
     # Attempt to open the lock file
-    $strCurrentLockFile = lockFileName($strLockType, optionGet(OPTION_STANZA), optionGet(OPTION_REPO_PATH));
+    $$oLock{file} = lockFileName($strLockType, optionGet(OPTION_STANZA), optionGet(OPTION_REPO_PATH));
 
-    sysopen($hCurrentLockHandle, $strCurrentLockFile, O_WRONLY | O_CREAT)
-        or confess &log(ERROR, "unable to open lock file ${strCurrentLockFile}");
+    sysopen($$oLock{handle}, $$oLock{file}, O_WRONLY | O_CREAT)
+        or confess &log(ERROR, "unable to open lock file $$oLock{file}");
 
     # Attempt to lock the lock file
-    if (!flock($hCurrentLockHandle, LOCK_EX | LOCK_NB))
+    if (!flock($$oLock{handle}, LOCK_EX | LOCK_NB))
     {
-        close($hCurrentLockHandle);
+        close($$oLock{handle});
         return false;
     }
 
     # Set current lock type so we know we have a lock
-    $strCurrentLockType = $strLockType;
+    push @oyLock, $oLock;
 
     # Lock was successful
     return true;
@@ -104,10 +108,12 @@ sub lockRelease
     my $strLockType = shift;
 
     # Fail if there is no lock
-    if (!defined($strCurrentLockType))
+    if (!@oyLock)
     {
         confess &log(ASSERT, 'no lock is currently held');
     }
+
+    my $oLock = pop @oyLock;
 
     # # Fail if the lock being released is not the one held
     # if ($strLockType ne $strCurrentLockType)
@@ -116,12 +122,8 @@ sub lockRelease
     # }
 
     # Remove the file
-    unlink($strCurrentLockFile);
-    close($hCurrentLockHandle);
-
-    # Undef lock variables
-    undef($strCurrentLockType);
-    undef($hCurrentLockHandle);
+    unlink($$oLock{file});
+    close($$oLock{handle});
 }
 
 1;

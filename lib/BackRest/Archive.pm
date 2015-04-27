@@ -115,7 +115,7 @@ sub getProcess
     do
     {
         # If async then fork the async process
-        if ($bArchiveAsync && !$bArchiveAsyncRunning && lockAcquire(OP_ARCHIVE_GET))
+        if ($bArchiveAsync && !$bArchiveAsyncRunning)
         {
             my $pId;
 
@@ -126,6 +126,11 @@ sub getProcess
             }
             elsif (defined($pId))
             {
+                if (!lockAcquire(OP_ARCHIVE_GET))
+                {
+                    return 0;
+                }
+
                 # Close file handles and reopen to /dev/null
                 close STDIN;
                 close STDOUT;
@@ -168,10 +173,15 @@ sub getProcess
             }
         }
 
-        &log(DEBUG, "fetching $ARGV[1]");
         $iResult = $self->getOne($ARGV[1], $ARGV[2], $bArchiveAsync, false);
     }
     while ($iResult != 0 && waitMore($oWaitGet));
+
+    # # If not able to get the wal segment then grab it directly
+    # if ($iResult != 0)
+    # {
+    #     return $self->getOne($ARGV[1], $ARGV[2]);
+    # }
 
     return $iResult;
 }
@@ -316,7 +326,8 @@ sub getAsync
         }
     }
 
-#    &log(DEBUG, "Archive->asyncGet: " . ($iFileExists > 0 ? "last found locally ${strLastArchive}" : "none found locally"));
+    &log(DEBUG, "Archive->asyncGet: " . (defined($strLastFetchedArchive) ? "last found locally ${strLastFetchedArchive}" :
+                                                                           "none found locally"));
 
     # If the number of existing files is lower than the threshold then fetch more
     my $iFileMore = 0;
@@ -326,8 +337,8 @@ sub getAsync
     {
         my $strNextArchiveFile = $self->walFind($oFile, PATH_BACKUP_ARCHIVE, $strNextArchive);
 
-        while ($iFileExists < 3 && defined($strNextArchiveFile) &&
-               $self->getOne($strNextArchive, "${strArchivePath}/$strNextArchiveFile", false, true) == 0)
+        while (defined($strNextArchiveFile) && $iFileExists < 64 &&
+               $self->getOne($strNextArchive, "${strArchivePath}/" . substr($strNextArchiveFile, 0, 65), false, true) == 0)
         {
             $iFileMore++;
             $iFileExists++;
