@@ -247,7 +247,7 @@ Run a <id>full</id> backup on the <id>db</id> stanza.  <param>--type</param> can
 
 					<!-- OPERATION - RESTORE COMMAND - RECOVERY-SETTING OPTION -->
 					<option id="recovery-setting">
-						<text>Recovery settings in restore.conf options can be specified with this option.  See http://www.postgresql.org/docs/X.X/static/recovery-config.html for details on restore.conf options (replace X.X with your database version).  This option can be used multiple times.
+						<text>Recovery settings in restore.conf options can be specified with this option.  See http://www.postgresql.org/docs/current/static/recovery-config.html for details on restore.conf options (replace current with your database version).  This option can be used multiple times.
 
 							Note: <setting>restore_command</setting> will be automatically generated but can be overridden with this option.  Be careful about specifying your own <setting>restore_command</setting> as <backrest/> is designed to handle this for you.  Target Recovery options (recovery_target_name, recovery_target_time, etc.) are generated automatically by <backrest/> and should not be set with this option.
 
