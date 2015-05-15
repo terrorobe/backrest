@@ -305,30 +305,49 @@ sub BackRestTestCommon_ExecuteRegExp
     my $strLine = shift;
     my $strType = shift;
     my $strExpression = shift;
-    my $bBrace = shift;
+    my $strToken = shift;
+    my $bIndex = shift;
 
     my @stryReplace = ($strLine =~ /$strExpression/g);
 
     foreach my $strReplace (@stryReplace)
     {
         my $iIndex;
+        my $strTypeReplacement;
 
-        if (defined($$oReplaceHash{$strType}{$strReplace}))
+        if (!defined($bIndex) || $bIndex)
         {
-            $iIndex = $$oReplaceHash{$strType}{$strReplace}{index};
+            if (defined($$oReplaceHash{$strType}{$strReplace}))
+            {
+                $iIndex = $$oReplaceHash{$strType}{$strReplace}{index};
+            }
+            else
+            {
+                if (!defined($$oReplaceHash{$strType}{index}))
+                {
+                    $$oReplaceHash{$strType}{index} = 1;
+                }
+
+                $iIndex = $$oReplaceHash{$strType}{index}++;
+                $$oReplaceHash{$strType}{$strReplace}{index} = $iIndex;
+            }
+        }
+
+        $strTypeReplacement = "[${strType}" . (defined($iIndex) ? "-${iIndex}" : '') . ']';
+
+        my $strReplacement;
+
+        if (defined($strToken))
+        {
+            $strReplacement = $strReplace;
+            $strReplacement =~ s/$strToken/$strTypeReplacement/;
         }
         else
         {
-            if (!defined($$oReplaceHash{$strType}{index}))
-            {
-                $$oReplaceHash{$strType}{index} = 1;
-            }
-
-            $iIndex = $$oReplaceHash{$strType}{index}++;
-            $$oReplaceHash{$strType}{$strReplace}{index} = $iIndex;
+            $strReplacement = $strTypeReplacement;
         }
 
-        $strLine =~ s/$strReplace/\[$strType-$iIndex\]/g;
+        $strLine =~ s/$strReplace/$strReplacement/g;
     }
 
     return $strLine;
@@ -361,14 +380,23 @@ sub BackRestTestCommon_ExecuteRegAll
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'group = GROUP', 'group = [^ \n,\[\]]+');
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'user = USER', 'user = [^ \n,\[\]]+');
 
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'version = VERSION', 'version = ' . version_get());
-    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, '"version" : VERSION', '"version" : ' . version_get());
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', 'version = ' . version_get(), version_get . '$');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'VERSION', '"version" : ' . version_get(), version_get . '$');
+
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'FORMAT', '"format" : ' . FORMAT, FORMAT . '$');
 
     my $strTimestampRegExp = "[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]";
 
-    $strLine =~ s/"timestamp-copy-start" : "$strTimestampRegExp"/"timestamp-copy-start" : "TIMESTAMP"/g;
-    $strLine =~ s/"timestamp-start" : "$strTimestampRegExp"/"timestamp-start" : "TIMESTAMP"/g;
-    $strLine =~ s/"timestamp-stop" : "$strTimestampRegExp"/"timestamp-stop" : "TIMESTAMP"/g;
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', "\"timestamp-copy-start\" : \"$strTimestampRegExp\"",
+                                                $strTimestampRegExp, false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', "\"timestamp-start\" : \"$strTimestampRegExp\"",
+                                                $strTimestampRegExp, false);
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'TIMESTAMP', "\"timestamp-stop\" : \"$strTimestampRegExp\"",
+                                                $strTimestampRegExp, false);
+
+    # $strLine =~ s/"timestamp-copy-start" : "$strTimestampRegExp"/"timestamp-copy-start" : "TIMESTAMP"/g;
+    # $strLine =~ s/"timestamp-start" : "$strTimestampRegExp"/"timestamp-start" : "TIMESTAMP"/g;
+    # $strLine =~ s/"timestamp-stop" : "$strTimestampRegExp"/"timestamp-stop" : "TIMESTAMP"/g;
 
     return $strLine;
 }

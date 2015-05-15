@@ -46,31 +46,30 @@ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression
    "db" : {
       "backup-list" : [
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-FULL-1]",
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "full",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          }
       ]
    },
    "test" : {
       "backup-list" : [
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-FULL-1]",
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "full",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          }
       ]
    }
 }
-
 DEBUG:     safe exit called, terminating threads
 
 full backup (resume)
@@ -155,7 +154,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
- INFO: last backup label = [BACKUP-FULL-2], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
@@ -194,7 +193,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
- INFO: last backup label = [BACKUP-FULL-2], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
@@ -239,7 +238,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
- INFO: last backup label = [BACKUP-FULL-2], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
@@ -286,7 +285,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
- INFO: last backup label = [BACKUP-FULL-2], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common/pg_tblspc
@@ -437,7 +436,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
- INFO: last backup label = [BACKUP-DIFF-2], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-DIFF-2], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
@@ -476,7 +475,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
- INFO: last backup label = [BACKUP-INCR-3], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
@@ -510,7 +509,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
- INFO: last backup label = [BACKUP-FULL-2], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
@@ -560,7 +559,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 1, 1): ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}$, sort reverse
- INFO: last backup label = [BACKUP-DIFF-3], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-DIFF-3], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
@@ -588,7 +587,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
- INFO: last backup label = [BACKUP-FULL-2], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
@@ -681,7 +680,7 @@ DEBUG:     File->path_create:  backup:cluster:[TEST_PATH]/backrest/backup/db, mo
 DEBUG:     File->exists: backup:cluster:[TEST_PATH]/backrest/backup/db
 DEBUG:     backup_regexp_get(1, 0, 0): ^[0-9]{8}\-[0-9]{6}F$
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression ^[0-9]{8}\-[0-9]{6}F$, sort reverse
- INFO: last backup label = [BACKUP-FULL-3], [version = VERSION-1]
+ INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-2]
 DEBUG:     File->exists: db:absolute:[TEST_PATH]/db/common-2/postmaster.pid
 DEBUG:     Manifest->build
 DEBUG:     File->manifest: db:absolute:[TEST_PATH]/db/common-2/pg_tblspc
@@ -771,43 +770,43 @@ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression
    "db" : {
       "backup-list" : [
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-FULL-2]",
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "full",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-DIFF-2]",
             "prior" : "[BACKUP-FULL-2]",
             "reference" : [
                "[BACKUP-FULL-2]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "diff",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-INCR-3]",
             "prior" : "[BACKUP-DIFF-2]",
             "reference" : [
                "[BACKUP-FULL-2]",
                "[BACKUP-DIFF-2]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "incr",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-INCR-4]",
             "prior" : "[BACKUP-INCR-3]",
             "reference" : [
@@ -815,116 +814,116 @@ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression
                "[BACKUP-DIFF-2]",
                "[BACKUP-INCR-3]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "incr",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-DIFF-3]",
             "prior" : "[BACKUP-FULL-2]",
             "reference" : [
                "[BACKUP-FULL-2]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "diff",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-INCR-5]",
             "prior" : "[BACKUP-DIFF-3]",
             "reference" : [
                "[BACKUP-FULL-2]",
                "[BACKUP-DIFF-3]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "incr",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-DIFF-4]",
             "prior" : "[BACKUP-FULL-2]",
             "reference" : [
                "[BACKUP-FULL-2]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "diff",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-FULL-3]",
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "full",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-DIFF-5]",
             "prior" : "[BACKUP-FULL-3]",
             "reference" : [
                "[BACKUP-FULL-3]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "diff",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          }
       ]
    },
    "test" : {
       "backup-list" : [
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-FULL-2]",
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "full",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-DIFF-2]",
             "prior" : "[BACKUP-FULL-2]",
             "reference" : [
                "[BACKUP-FULL-2]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "diff",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-INCR-3]",
             "prior" : "[BACKUP-DIFF-2]",
             "reference" : [
                "[BACKUP-FULL-2]",
                "[BACKUP-DIFF-2]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "incr",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-INCR-4]",
             "prior" : "[BACKUP-INCR-3]",
             "reference" : [
@@ -932,76 +931,75 @@ DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression
                "[BACKUP-DIFF-2]",
                "[BACKUP-INCR-3]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "incr",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-DIFF-3]",
             "prior" : "[BACKUP-FULL-2]",
             "reference" : [
                "[BACKUP-FULL-2]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "diff",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-INCR-5]",
             "prior" : "[BACKUP-DIFF-3]",
             "reference" : [
                "[BACKUP-FULL-2]",
                "[BACKUP-DIFF-3]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "incr",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-DIFF-4]",
             "prior" : "[BACKUP-FULL-2]",
             "reference" : [
                "[BACKUP-FULL-2]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "diff",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-FULL-3]",
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "full",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          },
          {
-            "format" : 3,
+            "format" : [FORMAT-1],
             "label" : "[BACKUP-DIFF-5]",
             "prior" : "[BACKUP-FULL-3]",
             "reference" : [
                "[BACKUP-FULL-3]"
             ],
-            "timestamp-copy-start" : "TIMESTAMP",
-            "timestamp-start" : "TIMESTAMP",
-            "timestamp-stop" : "TIMESTAMP",
+            "timestamp-copy-start" : "[TIMESTAMP]",
+            "timestamp-start" : "[TIMESTAMP]",
+            "timestamp-stop" : "[TIMESTAMP]",
             "type" : "diff",
-            ["version" : VERSION-1]
+            "version" : [VERSION-1]
          }
       ]
    }
 }
-
 DEBUG:     safe exit called, terminating threads

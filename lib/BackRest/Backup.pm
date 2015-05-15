@@ -82,7 +82,7 @@ sub list
 #        $$oStanzaHash{'backup-list'} = $self->listStanza(optionGet(OPTION_STANZA));
 
         my $oJSON = JSON::PP->new()->canonical()->pretty();
-        print $oJSON->encode(\%oStanzaHash) . "\n";
+        print $oJSON->encode(\%oStanzaHash);
     }
 
     return 0;
