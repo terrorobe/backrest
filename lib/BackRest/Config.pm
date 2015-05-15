@@ -42,11 +42,12 @@ use constant
     OP_ARCHIVE_GET   => 'archive-get',
     OP_ARCHIVE_PUSH  => 'archive-push',
     OP_BACKUP        => 'backup',
+    OP_LIST          => 'list',
     OP_RESTORE       => 'restore',
     OP_EXPIRE        => 'expire'
 };
 
-push @EXPORT, qw(OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_RESTORE OP_EXPIRE);
+push @EXPORT, qw(OP_ARCHIVE_GET OP_ARCHIVE_PUSH OP_BACKUP OP_LIST OP_RESTORE OP_EXPIRE);
 
 ####################################################################################################################################
 # BACKUP Type Constants
@@ -385,7 +386,30 @@ my %oOptionRule =
 
     &OPTION_STANZA =>
     {
-        &OPTION_RULE_TYPE => OPTION_TYPE_STRING
+        &OPTION_RULE_TYPE => OPTION_TYPE_STRING,
+        &OPTION_RULE_OPERATION =>
+        {
+            &OP_ARCHIVE_GET =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
+            &OP_ARCHIVE_PUSH =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
+            &OP_BACKUP =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
+            &OP_EXPIRE =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            },
+            &OP_RESTORE =>
+            {
+                &OPTION_RULE_REQUIRED => true
+            }
+        }
     },
 
     &OPTION_TARGET =>
@@ -1137,6 +1161,7 @@ sub optionValid
     if ($strOperation ne OP_ARCHIVE_GET &&
         $strOperation ne OP_ARCHIVE_PUSH &&
         $strOperation ne OP_BACKUP &&
+        $strOperation ne OP_LIST &&
         $strOperation ne OP_RESTORE &&
         $strOperation ne OP_EXPIRE)
     {
@@ -1288,7 +1313,7 @@ sub optionValid
                         $strValue = $$oConfig{optionGet(OPTION_STANZA)}{$strOption};
                     }
                     # Else do a full search
-                    else
+                    elsif (optionTest(OPTION_STANZA))
                     {
                         # First check in the stanza section
                         $strValue = $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH ?
