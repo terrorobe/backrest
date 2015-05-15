@@ -37,6 +37,12 @@ DEBUG:     File->path_create:  backup:absolute:[TEST_PATH]/backrest/backup/db, m
  INFO: archive rentention type not set - archive logs will not be expired
 DEBUG:     safe exit called, terminating threads
 
+list db
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db list
+------------------------------------------------------------------------------------------------------------------------------------
+Well, here's a list remote
+DEBUG:     safe exit called, terminating threads
+
 full backup (resume)
 > [BACKREST_BIN_PATH]/pg_backrest.pl --config=[TEST_PATH]/backrest/pg_backrest.conf --no-start-stop --type=full --stanza=db backup --test --test-delay=0
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -865,7 +871,8 @@ DEBUG:     File->remove: db:absolute:[TEST_PATH]/db/common-2/recovery.conf
  INFO: restore complete
 DEBUG:     safe exit called, terminating threads
 
-> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf list
+list db
+> ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db list
 ------------------------------------------------------------------------------------------------------------------------------------
 Well, here's a list remote
 DEBUG:     safe exit called, terminating threads

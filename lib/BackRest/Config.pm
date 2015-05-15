@@ -767,6 +767,7 @@ my %oOptionRule =
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
+            &OP_LIST => true,
             &OP_RESTORE => true
         }
     },
@@ -783,6 +784,7 @@ my %oOptionRule =
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
+            &OP_LIST => true,
             &OP_RESTORE => true
         }
     },

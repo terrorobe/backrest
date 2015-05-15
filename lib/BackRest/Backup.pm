@@ -70,10 +70,32 @@ sub list
     }
     else
     {
-        print "Well, here's a list local\n";
+        $self->listStanza(optionGet(OPTION_STANZA));
     }
 
     return 0;
+}
+
+
+####################################################################################################################################
+# listStanza
+####################################################################################################################################
+sub listStanza
+{
+    my $self = shift;
+    my $strStanza = shift;
+
+    # Create the file object
+    my $oFile = new BackRest::File
+    (
+        $strStanza,
+        optionRemoteTypeTest(BACKUP) ? optionGet(OPTION_REPO_REMOTE_PATH) : optionGet(OPTION_REPO_PATH),
+        optionRemoteType(),
+        optionRemote()
+    );
+
+    # Retrieve backups for the stanza
+    my @stryBackup = $oFile->list(PATH_BACKUP_CLUSTER, undef, undef, undef, true);
 }
 
 ####################################################################################################################################

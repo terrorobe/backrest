@@ -992,7 +992,6 @@ sub BackRestTestBackup_Backup
     return BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, undef, false, $iExpectedExitStatus);
 }
 
-
 ####################################################################################################################################
 # BackRestTestBackup_List
 ####################################################################################################################################
@@ -1008,8 +1007,8 @@ sub BackRestTestBackup_List
     BackRestTestCommon_Execute(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
                               ' --config=' .
                               ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
-                              '/pg_backrest.conf' . (defined($strStanza) ? " --type=${strStanza}" : '') . ' list',
-                              $bRemote, $strComment);
+                              '/pg_backrest.conf' . (defined($strStanza) ? " --stanza=${strStanza}" : '') . ' list',
+                              $bRemote, undef, undef, undef, $strComment);
 }
 
 ####################################################################################################################################
@@ -2036,6 +2035,10 @@ sub BackRestTestBackup_Test
             my $strFullBackup = BackRestTestBackup_BackupSynthetic($strType, $strStanza, $bRemote, $oFile, \%oManifest,
                                                                    undef, undef, undef, undef, '--manifest-save-threshold=3');
 
+            # List Backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_List($strStanza, false);
+
             # Resume Full Backup
             #-----------------------------------------------------------------------------------------------------------------------
             $strType = 'full';
@@ -2274,7 +2277,7 @@ sub BackRestTestBackup_Test
 
             # List Backup
             #-----------------------------------------------------------------------------------------------------------------------
-            BackRestTestBackup_List(undef, false);
+            BackRestTestBackup_List($strStanza, false);
         }
         }
         }
