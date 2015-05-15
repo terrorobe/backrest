@@ -41,7 +41,36 @@ list db
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db list
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression [UNDEF], sort forward
-full - [BACKUP-FULL-1]
+DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression [UNDEF], sort forward
+{
+   "db" : {
+      "backup-list" : [
+         {
+            "format" : 3,
+            "label" : "[BACKUP-FULL-1]",
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "full",
+            ["version" : VERSION-1]
+         }
+      ]
+   },
+   "test" : {
+      "backup-list" : [
+         {
+            "format" : 3,
+            "label" : "[BACKUP-FULL-1]",
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "full",
+            ["version" : VERSION-1]
+         }
+      ]
+   }
+}
+
 DEBUG:     safe exit called, terminating threads
 
 full backup (resume)
@@ -740,27 +769,242 @@ list db
 > ../bin/pg_backrest.pl --config=[TEST_PATH]/db/pg_backrest.conf --stanza=db list
 ------------------------------------------------------------------------------------------------------------------------------------
 DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression [UNDEF], sort forward
-full - [BACKUP-FULL-2]
-diff - [BACKUP-DIFF-2]
-    prior: [BACKUP-FULL-2]
-    reference: [BACKUP-FULL-2]
-incr - [BACKUP-INCR-3]
-    prior: [BACKUP-DIFF-2]
-    reference: [BACKUP-FULL-2],[BACKUP-DIFF-2]
-incr - [BACKUP-INCR-4]
-    prior: [BACKUP-INCR-3]
-    reference: [BACKUP-FULL-2],[BACKUP-DIFF-2],[BACKUP-INCR-3]
-diff - [BACKUP-DIFF-3]
-    prior: [BACKUP-FULL-2]
-    reference: [BACKUP-FULL-2]
-incr - [BACKUP-INCR-5]
-    prior: [BACKUP-DIFF-3]
-    reference: [BACKUP-FULL-2],[BACKUP-DIFF-3]
-diff - [BACKUP-DIFF-4]
-    prior: [BACKUP-FULL-2]
-    reference: [BACKUP-FULL-2]
-full - [BACKUP-FULL-3]
-diff - [BACKUP-DIFF-5]
-    prior: [BACKUP-FULL-3]
-    reference: [BACKUP-FULL-3]
+DEBUG:     File->list: backup:cluster:[TEST_PATH]/backrest/backup/db, expression [UNDEF], sort forward
+{
+   "db" : {
+      "backup-list" : [
+         {
+            "format" : 3,
+            "label" : "[BACKUP-FULL-2]",
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "full",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-DIFF-2]",
+            "prior" : "[BACKUP-FULL-2]",
+            "reference" : [
+               "[BACKUP-FULL-2]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "diff",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-INCR-3]",
+            "prior" : "[BACKUP-DIFF-2]",
+            "reference" : [
+               "[BACKUP-FULL-2]",
+               "[BACKUP-DIFF-2]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "incr",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-INCR-4]",
+            "prior" : "[BACKUP-INCR-3]",
+            "reference" : [
+               "[BACKUP-FULL-2]",
+               "[BACKUP-DIFF-2]",
+               "[BACKUP-INCR-3]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "incr",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-DIFF-3]",
+            "prior" : "[BACKUP-FULL-2]",
+            "reference" : [
+               "[BACKUP-FULL-2]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "diff",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-INCR-5]",
+            "prior" : "[BACKUP-DIFF-3]",
+            "reference" : [
+               "[BACKUP-FULL-2]",
+               "[BACKUP-DIFF-3]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "incr",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-DIFF-4]",
+            "prior" : "[BACKUP-FULL-2]",
+            "reference" : [
+               "[BACKUP-FULL-2]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "diff",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-FULL-3]",
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "full",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-DIFF-5]",
+            "prior" : "[BACKUP-FULL-3]",
+            "reference" : [
+               "[BACKUP-FULL-3]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "diff",
+            ["version" : VERSION-1]
+         }
+      ]
+   },
+   "test" : {
+      "backup-list" : [
+         {
+            "format" : 3,
+            "label" : "[BACKUP-FULL-2]",
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "full",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-DIFF-2]",
+            "prior" : "[BACKUP-FULL-2]",
+            "reference" : [
+               "[BACKUP-FULL-2]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "diff",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-INCR-3]",
+            "prior" : "[BACKUP-DIFF-2]",
+            "reference" : [
+               "[BACKUP-FULL-2]",
+               "[BACKUP-DIFF-2]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "incr",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-INCR-4]",
+            "prior" : "[BACKUP-INCR-3]",
+            "reference" : [
+               "[BACKUP-FULL-2]",
+               "[BACKUP-DIFF-2]",
+               "[BACKUP-INCR-3]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "incr",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-DIFF-3]",
+            "prior" : "[BACKUP-FULL-2]",
+            "reference" : [
+               "[BACKUP-FULL-2]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "diff",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-INCR-5]",
+            "prior" : "[BACKUP-DIFF-3]",
+            "reference" : [
+               "[BACKUP-FULL-2]",
+               "[BACKUP-DIFF-3]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "incr",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-DIFF-4]",
+            "prior" : "[BACKUP-FULL-2]",
+            "reference" : [
+               "[BACKUP-FULL-2]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "diff",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-FULL-3]",
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "full",
+            ["version" : VERSION-1]
+         },
+         {
+            "format" : 3,
+            "label" : "[BACKUP-DIFF-5]",
+            "prior" : "[BACKUP-FULL-3]",
+            "reference" : [
+               "[BACKUP-FULL-3]"
+            ],
+            "timestamp-copy-start" : "TIMESTAMP",
+            "timestamp-start" : "TIMESTAMP",
+            "timestamp-stop" : "TIMESTAMP",
+            "type" : "diff",
+            ["version" : VERSION-1]
+         }
+      ]
+   }
+}
+
 DEBUG:     safe exit called, terminating threads
