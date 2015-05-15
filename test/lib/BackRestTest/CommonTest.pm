@@ -305,6 +305,7 @@ sub BackRestTestCommon_ExecuteRegExp
     my $strLine = shift;
     my $strType = shift;
     my $strExpression = shift;
+    my $bBrace = shift;
 
     my @stryReplace = ($strLine =~ /$strExpression/g);
 
@@ -361,6 +362,13 @@ sub BackRestTestCommon_ExecuteRegAll
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'user = USER', 'user = [^ \n,\[\]]+');
 
     $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'version = VERSION', 'version = ' . version_get());
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, '"version" : VERSION', '"version" : ' . version_get());
+
+    my $strTimestampRegExp = "[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]";
+
+    $strLine =~ s/"timestamp-copy-start" : "$strTimestampRegExp"/"timestamp-copy-start" : "TIMESTAMP"/g;
+    $strLine =~ s/"timestamp-start" : "$strTimestampRegExp"/"timestamp-start" : "TIMESTAMP"/g;
+    $strLine =~ s/"timestamp-stop" : "$strTimestampRegExp"/"timestamp-stop" : "TIMESTAMP"/g;
 
     return $strLine;
 }

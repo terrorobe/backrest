@@ -70,7 +70,19 @@ sub list
     }
     else
     {
-        $self->listStanza(optionGet(OPTION_STANZA));
+        my %oStanzaHash;
+        $oStanzaHash{test}{'backup-list'} = $self->listStanza(optionGet(OPTION_STANZA));
+#        push(@oyStanzaList, $oStanzaHash);
+#        push(@oyStanzaList, {stanza => 'test'});
+
+#        $oStanzaHash = {stanza => optionGet(OPTION_STANZA)};
+#        push(@oyStanzaList, $oStanzaHash);
+        $oStanzaHash{optionGet(OPTION_STANZA)}{'backup-list'} = $self->listStanza(optionGet(OPTION_STANZA));
+
+#        $$oStanzaHash{'backup-list'} = $self->listStanza(optionGet(OPTION_STANZA));
+
+        my $oJSON = JSON::PP->new()->canonical()->pretty();
+        print $oJSON->encode(\%oStanzaHash) . "\n";
     }
 
     return 0;
@@ -97,23 +109,77 @@ sub listStanza
     # Retrieve backups for the stanza
     my @stryBackup = $oFile->list(PATH_BACKUP_CLUSTER, undef, undef, undef, true);
 
+    # my $iDiffIndent = 4;
+    # my $iIncrIndent = 4;
+
+    my @oyBackupList;
+
     foreach my $strBackup (@stryBackup)
     {
         if ($strBackup ne OPTION_DEFAULT_RESTORE_SET)
         {
             # !!! NEED to only load part of the ini file - figure out regexp to pass here
             my %oManifest;
-            ini_load($oFile->path_get(PATH_BACKUP_CLUSTER, "${strBackup}/backup.manifest"), \%oManifest);
+            ini_load($oFile->path_get(PATH_BACKUP_CLUSTER, "${strBackup}/" . FILE_MANIFEST), \%oManifest);
 
-            print "$oManifest{backup}{type} - ${strBackup}\n";
-
-            if ($oManifest{backup}{type} ne 'full')
+            my $oBackupHash =
             {
-                print "    prior: $oManifest{backup}{prior}\n";
-                print "    reference: $oManifest{backup}{reference}\n";
+                &MANIFEST_KEY_TYPE => $oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE},
+                &MANIFEST_KEY_LABEL => $oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL},
+                &MANIFEST_KEY_FORMAT => $oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_FORMAT} + 0,
+                &MANIFEST_KEY_TIMESTAMP_COPY_START => $oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START},
+                &MANIFEST_KEY_TIMESTAMP_START => $oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START},
+                &MANIFEST_KEY_TIMESTAMP_STOP => $oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_STOP},
+                &MANIFEST_KEY_VERSION => $oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_VERSION} + 0
+             };
+
+            if (defined($oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR}))
+            {
+                $$oBackupHash{&MANIFEST_KEY_PRIOR} = $oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_PRIOR};
             }
+
+            if (defined($oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_REFERENCE}))
+            {
+                my @stryReference = split(',', $oManifest{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_REFERENCE});
+
+                $$oBackupHash{&MANIFEST_KEY_REFERENCE} = \@stryReference;
+            }
+
+            push(@oyBackupList, $oBackupHash);
+
+            # my $strType = $oManifest{backup}{type};
+            #
+            # if ($strType eq BACKUP_TYPE_FULL)
+            # {
+            #     $iIncrIndent = 4;
+            # }
+            # elsif ($strType eq BACKUP_TYPE_DIFF)
+            # {
+            #     $iIncrIndent = 8;
+            # }
+            #
+            # my $strIndent = '    ';
+            #
+            # if ($strType eq BACKUP_TYPE_DIFF)
+            # {
+            #     $strIndent = $strIndent . (' ' x $iDiffIndent);
+            # }
+            # elsif ($strType eq BACKUP_TYPE_INCR)
+            # {
+            #     $strIndent = $strIndent . (' ' x $iIncrIndent);
+            # }
+            #
+            # print "${strIndent}${strType} - ${strBackup}\n";
+            #
+            # if ($oManifest{backup}{type} ne 'full')
+            # {
+            #     print "${strIndent}    prior: $oManifest{backup}{prior}\n";
+            #     print "${strIndent}    reference: $oManifest{backup}{reference}\n";
+            # }
         }
     }
+
+    return \@oyBackupList;
 }
 
 ####################################################################################################################################
