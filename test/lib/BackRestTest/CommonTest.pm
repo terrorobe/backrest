@@ -76,6 +76,7 @@ my $bFullLog = false;
 my $hOut;
 my $pId;
 my $strCommand;
+my $oReplaceHash = {};
 
 # Test globals
 my $strTestLog;
@@ -190,6 +191,7 @@ sub BackRestTestCommon_Run
     }
 
     $strFullLog = "${strTestLog}\n" . ('=' x length($strTestLog)) . "\n";
+    $oReplaceHash = {};
 
     $strModule = $strModuleParam;
     $strModuleTest = $strModuleTestParam;
@@ -273,24 +275,15 @@ sub BackRestTestCommon_ExecuteBegin
     $strOutLog = '';
     $hOut = undef;
 
-    my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
     $bFullLog = false;
 
     if ($strCommandParam =~ /\/bin\/pg_backrest\.pl/)
     {
-        my $strTestPath = BackRestTestCommon_TestPathGet();
-
-        $strCommandParam =~ s/$strBinPath/[BACKREST_BIN_PATH]/g;
-        $strCommandParam =~ s/[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}/[BACKUP_LABEL]/;
-
-        if (defined($strTestPath))
-        {
-            $strCommandParam =~ s/$strTestPath/[TEST_PATH]/g;
-        }
+        $strCommandParam = BackRestTestCommon_ExecuteRegAll($strCommandParam);
 
         if (defined($strComment))
         {
-            $strComment =~ s/[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}/[BACKUP_LABEL]/;
+            $strComment = BackRestTestCommon_ExecuteRegAll($strComment);
             $strFullLog .= "\n${strComment}";
         }
 
@@ -302,6 +295,74 @@ sub BackRestTestCommon_ExecuteBegin
 
     # Execute the command
     $pId = open3(undef, $hOut, $hError, $strCommand);
+}
+
+####################################################################################################################################
+# BackRestTestCommon_ExecuteRegExp
+####################################################################################################################################
+sub BackRestTestCommon_ExecuteRegExp
+{
+    my $strLine = shift;
+    my $strType = shift;
+    my $strExpression = shift;
+
+    my @stryReplace = ($strLine =~ /$strExpression/g);
+
+    foreach my $strReplace (@stryReplace)
+    {
+        my $iIndex;
+
+        if (defined($$oReplaceHash{$strType}{$strReplace}))
+        {
+            $iIndex = $$oReplaceHash{$strType}{$strReplace}{index};
+        }
+        else
+        {
+            if (!defined($$oReplaceHash{$strType}{index}))
+            {
+                $$oReplaceHash{$strType}{index} = 1;
+            }
+
+            $iIndex = $$oReplaceHash{$strType}{index}++;
+            $$oReplaceHash{$strType}{$strReplace}{index} = $iIndex;
+        }
+
+        $strLine =~ s/$strReplace/\[$strType-$iIndex\]/g;
+    }
+
+    return $strLine;
+}
+
+####################################################################################################################################
+# BackRestTestCommon_ExecuteRegExpAll
+####################################################################################################################################
+sub BackRestTestCommon_ExecuteRegAll
+{
+    my $strLine = shift;
+
+    my $strBinPath = dirname(dirname(abs_path($0))) . '/bin';
+
+    $strLine =~ s/$strBinPath/[BACKREST_BIN_PATH]/g;
+
+    my $strTestPath = BackRestTestCommon_TestPathGet();
+
+    if (defined($strTestPath))
+    {
+        $strLine =~ s/$strTestPath/[TEST_PATH]/g;
+    }
+
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'modification-time = MODIFICATION-TIME', 'modification_time = [0-9]+');
+
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-INCR', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}I');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-DIFF', '[0-9]{8}\-[0-9]{6}F\_[0-9]{8}\-[0-9]{6}D');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'BACKUP-FULL', '[0-9]{8}\-[0-9]{6}F');
+
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'group = GROUP', 'group = [^ \n,\[\]]+');
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'user = USER', 'user = [^ \n,\[\]]+');
+
+    $strLine = BackRestTestCommon_ExecuteRegExp($strLine, 'version = VERSION', 'version = ' . version_get());
+
+    return $strLine;
 }
 
 ####################################################################################################################################
@@ -317,10 +378,6 @@ sub BackRestTestCommon_ExecuteEnd
     # Set defaults
     $bSuppressError = defined($bSuppressError) ? $bSuppressError : false;
     $bShowOutput = defined($bShowOutput) ? $bShowOutput : false;
-
-    # Get test path
-    my $strTestPath = BackRestTestCommon_TestPathGet();
-    my $strVersion = version_get();
 
     # Create select objects
     my $oErrorSelect = IO::Select->new();
@@ -355,17 +412,8 @@ sub BackRestTestCommon_ExecuteEnd
 
                 if ($bFullLog)
                 {
-                    $strLine =~ s/^[^ ]* [^ ]* [^ ]*  //;
-                    $strLine =~ s/[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}/[BACKUP_LABEL]/g;
-                    $strLine =~ s/version = $strVersion/version = [VERSION]/g;
-                    $strLine =~ s/modification_time = [0-9]+/modification_time = [MODIFICATION_TIME]/g;
-                    $strLine =~ s/user = [^ \n,\[\]]+/user = [USER]/g;
-                    $strLine =~ s/group = [^ \n,\[\]]+/group = [GROUP]/g;
-
-                    if (defined($strTestPath))
-                    {
-                        $strLine =~ s/$strTestPath/[TEST_PATH]/g;
-                    }
+                    $strLine =~ s/^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{3} T[0-9]{2}  //;
+                    $strLine = BackRestTestCommon_ExecuteRegAll($strLine);
 
                     if ($strLine !~ /^ TEST/)
                     {

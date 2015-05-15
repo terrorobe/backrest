@@ -537,6 +537,7 @@ sub ini_load
 {
     my $strFile = shift;    # Full path to ini file to load from
     my $oConfig = shift;    # Reference to the hash where ini data will be stored
+    my $strStopAt = shift;  # RegExp where the load should stop
 
     # Open the ini file for reading
     my $hFile;
@@ -559,6 +560,12 @@ sub ini_load
             if (index($strLine, '[') == 0)
             {
                 $strSection = substr($strLine, 1, length($strLine) - 2);
+
+                if (defined($strStopAt) && $strSection =~ /$strStopAt/)
+                {
+                    close($hFile);
+                    return $oConfig;
+                }
             }
             else
             {

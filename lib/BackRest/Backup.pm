@@ -66,7 +66,7 @@ sub list
 
     if (optionRemoteTest())
     {
-        print "Well, here's a list remote\n";
+        print "Well, here's a fake remote list\n";
     }
     else
     {
@@ -96,6 +96,24 @@ sub listStanza
 
     # Retrieve backups for the stanza
     my @stryBackup = $oFile->list(PATH_BACKUP_CLUSTER, undef, undef, undef, true);
+
+    foreach my $strBackup (@stryBackup)
+    {
+        if ($strBackup ne OPTION_DEFAULT_RESTORE_SET)
+        {
+            # !!! NEED to only load part of the ini file - figure out regexp to pass here
+            my %oManifest;
+            ini_load($oFile->path_get(PATH_BACKUP_CLUSTER, "${strBackup}/backup.manifest"), \%oManifest);
+
+            print "$oManifest{backup}{type} - ${strBackup}\n";
+
+            if ($oManifest{backup}{type} ne 'full')
+            {
+                print "    prior: $oManifest{backup}{prior}\n";
+                print "    reference: $oManifest{backup}{reference}\n";
+            }
+        }
+    }
 }
 
 ####################################################################################################################################
