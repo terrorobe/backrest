@@ -64,7 +64,16 @@ sub list
 {
     my $self = shift;
 
-    print "Well, here's a list";
+    if (optionRemoteTest())
+    {
+        print "Well, here's a list remote\n";
+    }
+    else
+    {
+        print "Well, here's a list local\n";
+    }
+
+    return 0;
 }
 
 ####################################################################################################################################

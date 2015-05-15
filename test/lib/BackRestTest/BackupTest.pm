@@ -992,6 +992,26 @@ sub BackRestTestBackup_Backup
     return BackRestTestBackup_BackupEnd($strType, $oFile, $bRemote, undef, undef, false, $iExpectedExitStatus);
 }
 
+
+####################################################################################################################################
+# BackRestTestBackup_List
+####################################################################################################################################
+sub BackRestTestBackup_List
+{
+    my $strStanza = shift;
+    my $bRemote = shift;
+    my $strComment = shift;
+
+    $strComment = "list" . (defined($strStanza) ? " ${strStanza}" : '');
+    &log(INFO, "    $strComment");
+
+    BackRestTestCommon_Execute(($bRemote ? BackRestTestCommon_CommandMainAbsGet() : BackRestTestCommon_CommandMainGet()) .
+                              ' --config=' .
+                              ($bRemote ? BackRestTestCommon_RepoPathGet() : BackRestTestCommon_DbPathGet()) .
+                              '/pg_backrest.conf' . (defined($strStanza) ? " --type=${strStanza}" : '') . ' list',
+                              $bRemote, $strComment);
+}
+
 ####################################################################################################################################
 # BackRestTestBackup_BackupCompare
 ####################################################################################################################################
@@ -2252,6 +2272,9 @@ sub BackRestTestBackup_Test
                                        undef, undef, undef, undef, undef, undef,
                                        'no tablespace remap', undef, '--no-tablespace', false);
 
+            # List Backup
+            #-----------------------------------------------------------------------------------------------------------------------
+            BackRestTestBackup_List(undef, false);
         }
         }
         }

@@ -355,7 +355,7 @@ sub BackRestTestCommon_ExecuteEnd
 
                 if ($bFullLog)
                 {
-                    $strLine =~ s/^[^ ]* [^ ]* [^ ]* //;
+                    $strLine =~ s/^[^ ]* [^ ]* [^ ]*  //;
                     $strLine =~ s/[0-9]{8}\-[0-9]{6}F(\_[0-9]{8}\-[0-9]{6}(D|I)){0,1}/[BACKUP_LABEL]/g;
                     $strLine =~ s/version = $strVersion/version = [VERSION]/g;
                     $strLine =~ s/modification_time = [0-9]+/modification_time = [MODIFICATION_TIME]/g;
@@ -367,7 +367,7 @@ sub BackRestTestCommon_ExecuteEnd
                         $strLine =~ s/$strTestPath/[TEST_PATH]/g;
                     }
 
-                    if ($strLine !~ /^  TEST/)
+                    if ($strLine !~ /^ TEST/)
                     {
                         $strFullLog .= $strLine;
                     }

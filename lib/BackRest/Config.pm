@@ -543,6 +543,7 @@ my %oOptionRule =
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
+            &OP_LIST => true,
             &OP_RESTORE => true
         }
     },
@@ -619,6 +620,7 @@ my %oOptionRule =
         {
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
+            &OP_LIST => true,
             &OP_RESTORE => true
         },
     },
@@ -631,6 +633,7 @@ my %oOptionRule =
         {
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
+            &OP_LIST => true,
             &OP_RESTORE => true
         },
         &OPTION_RULE_REQUIRED => false,
@@ -650,6 +653,7 @@ my %oOptionRule =
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
             &OP_BACKUP => true,
+            &OP_LIST => true,
             &OP_RESTORE => true,
             &OP_EXPIRE => true
         },
@@ -664,6 +668,7 @@ my %oOptionRule =
         {
             &OP_ARCHIVE_GET => true,
             &OP_ARCHIVE_PUSH => true,
+            &OP_LIST => true,
             &OP_RESTORE => true
         },
     },
@@ -1310,15 +1315,21 @@ sub optionValid
                     # Only look in the stanza section when $strSection = true
                     if ($strSection eq CONFIG_SECTION_STANZA)
                     {
-                        $strValue = $$oConfig{optionGet(OPTION_STANZA)}{$strOption};
+                        if (optionTest(OPTION_STANZA))
+                        {
+                            $strValue = $$oConfig{optionGet(OPTION_STANZA)}{$strOption};
+                        }
                     }
                     # Else do a full search
-                    elsif (optionTest(OPTION_STANZA))
+                    else
                     {
                         # First check in the stanza section
-                        $strValue = $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH ?
-                                    $$oConfig{optionGet(OPTION_STANZA) . ":${strSection}"} :
-                                    $$oConfig{optionGet(OPTION_STANZA) . ":${strSection}"}{$strOption};
+                        if (optionTest(OPTION_STANZA))
+                        {
+                            $strValue = $oOptionRule{$strOption}{&OPTION_RULE_TYPE} eq OPTION_TYPE_HASH ?
+                                        $$oConfig{optionGet(OPTION_STANZA) . ":${strSection}"} :
+                                        $$oConfig{optionGet(OPTION_STANZA) . ":${strSection}"}{$strOption};
+                        }
 
                         # Else check for an inherited stanza section
                         if (!defined($strValue))
@@ -1329,7 +1340,10 @@ sub optionValid
 
                             if (defined($strInheritedSection))
                             {
-                                $strValue = $$oConfig{optionGet(OPTION_STANZA) . ":${strInheritedSection}"}{$strOption};
+                                if (optionTest(OPTION_STANZA))
+                                {
+                                    $strValue = $$oConfig{optionGet(OPTION_STANZA) . ":${strInheritedSection}"}{$strOption};
+                                }
                             }
 
                             # Else check the global section
