@@ -1025,6 +1025,8 @@ sub BackRestTestCommon_ConfigCreate
         {
             $oParamHash{'global:backup'}{'hardlink'} = 'y';
         }
+
+        $oParamHash{'global:backup'}{'archive-copy'} = 'y';
     }
 
     if (defined($bCompress) && !$bCompress)

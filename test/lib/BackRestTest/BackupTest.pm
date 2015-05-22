@@ -1338,7 +1338,7 @@ sub BackRestTestBackup_RestoreCompare
     }
 
     # Generate the tablespace map for real backups
-    my %oTablespaceMap;
+    my $oTablespaceMap = undef;
     # ${$oTablespaceMapRef}{oid}{$strName}{name} = $strName;
 
     if (!$bSynthetic && defined(${$oExpectedManifestRef}{'backup:tablespace'}))
@@ -1346,10 +1346,8 @@ sub BackRestTestBackup_RestoreCompare
         foreach my $strTablespaceName (keys(${$oExpectedManifestRef}{'backup:tablespace'}))
         {
             my $strTablespaceOid = ${$oExpectedManifestRef}{'backup:tablespace'}{$strTablespaceName}{link};
-            #
-            # confess "GOT HERE - $strTablespaceOid, $strTablespaceName";
 
-            $oTablespaceMap{oid}{$strTablespaceOid}{name} = $strTablespaceName;
+            $$oTablespaceMap{oid}{$strTablespaceOid}{name} = $strTablespaceName;
         }
     }
 
@@ -1357,7 +1355,7 @@ sub BackRestTestBackup_RestoreCompare
     my $oActualManifest = new BackRest::Manifest("${strTestPath}/actual.manifest", false);
 
     my $oTablespaceMapRef = undef;
-    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, $bSynthetic, \%oTablespaceMap);
+    $oActualManifest->build($oFile, ${$oExpectedManifestRef}{'backup:path'}{'base'}, $oLastManifest, true, $oTablespaceMap);
 
     # Generate checksums for all files if required
     # Also fudge size if this is a synthetic test - sizes may change during backup.
@@ -2332,7 +2330,7 @@ sub BackRestTestBackup_Test
                                             $bRemote ? BACKUP : undef,         # remote
                                             $bCompress,                        # compress
                                             undef,                             # checksum
-                                            $bRemote ? undef : true,           # hardlink
+                                            $bRemote ? undef : false,          # hardlink
                                             $iThreadMax,                       # thread-max
                                             $bArchiveAsync,                    # archive-async
                                             undef);                            # compress-async
@@ -2344,7 +2342,7 @@ sub BackRestTestBackup_Test
                                                 $bRemote ? DB : undef,         # remote
                                                 $bCompress,                    # compress
                                                 undef,                         # checksum
-                                                true,                          # hardlink
+                                                false,                         # hardlink
                                                 $iThreadMax,                   # thread-max
                                                 undef,                         # archive-async
                                                 undef);                        # compress-async

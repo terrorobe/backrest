@@ -552,7 +552,7 @@ sub build
         }
 
         # If bNoStartStop then build the tablespace map from pg_tblspc path
-        if ($bNoStartStop)
+        if ($bNoStartStop && !defined($oTablespaceMapRef))
         {
             $oTablespaceMapRef = {};
 
